@@ -5,7 +5,7 @@ public class Grep {
 	private final static String DFA_FILE_DELIMITER = "-d";
 	private static String nfa_file;
 	private static String dfa_file;
-	private static String regex_file;
+	private static String regex;
 	private static String file;
 	
 	public static void main(String[] args) {
@@ -14,8 +14,11 @@ public class Grep {
 		
 		System.out.println("nfa file: " + nfa_file);
 		System.out.println("dfa file: " + dfa_file);
-		System.out.println("regex file: " + regex_file);
+		System.out.println("regex: " + regex);
 		System.out.println("file name: " + file);
+		
+		NFA nfa = new NFA(regex);
+		nfa.makeStates(regex);
 	}
 	public static void parseInput(String[] args) {
 		// parse the input
@@ -38,7 +41,7 @@ public class Grep {
 				}
 				
 				dfa_file = args[3];
-				regex_file = args[4];
+				regex = args[4];
 				file = args[5];
 			}
 			
@@ -47,7 +50,7 @@ public class Grep {
 				if(args[2].startsWith("-")) { // make sure we're not giving bad input arguements 
 					inputErrorExitGracefully();
 				}
-				regex_file = args[2];
+				regex = args[2];
 				file = args[3];
 			}
 			
@@ -67,7 +70,7 @@ public class Grep {
 					inputErrorExitGracefully();
 				}
 				nfa_file = args[3];
-				regex_file = args[4];
+				regex = args[4];
 				file = args[5];
 			}
 			
@@ -76,7 +79,7 @@ public class Grep {
 				if(args[2].startsWith("-")) { // make sure we're not giving bad input arguements 
 					inputErrorExitGracefully();
 				}
-				regex_file = args[2];
+				regex = args[2];
 				file = args[3];
 			}
 		}
@@ -86,7 +89,7 @@ public class Grep {
 			if(args[0].startsWith("-")) { // make sure we're not giving bad input arguements 
 				inputErrorExitGracefully();
 			}
-			regex_file = args[0];
+			regex = args[0];
 			file = args[1];
 		}
 		
