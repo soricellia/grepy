@@ -65,10 +65,6 @@ public class NFA {
 		}
 		else if(op.equals(or)) {
 			
-		}else if(op.equals(openParen)) {
-			
-		}else if(op.equals(closeParen)) {
-			
 		}
 	}
 	
@@ -89,12 +85,10 @@ public class NFA {
 					states= new ArrayList<String>();
 					break;
 				case '(': 
-					ops.add(this.openParen);
 					nfa.add(states);
 					states= new ArrayList<String>();
 					break;
 				case ')': 
-					ops.add(this.closeParen);
 					nfa.add(states);
 					states= new ArrayList<String>();
 					break;

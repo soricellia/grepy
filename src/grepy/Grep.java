@@ -1,4 +1,7 @@
 package grepy;
+
+import java.util.ArrayList;
+
 public class Grep {
 
 	private final static String NFA_FILE_DELIMITER  = "-n";
@@ -17,10 +20,21 @@ public class Grep {
 		System.out.println("regex: " + regex);
 		System.out.println("file name: " + file);
 		
+		FileManager fm = new FileManager();
+		System.out.println(fm.readFile(file));
 		NFA nfa = new NFA(regex);
 		nfa.makeStates(regex);
+		
+		ArrayList<String> output = new ArrayList<String>();
+		output.add("q1->q2");
+		
+		if(dfa_file != null) {
+			fm.writeFile(dfa_file, output);
+		}
 	}
-	public static void parseInput(String[] args) {
+	
+	// parses the command line inputs
+	private static void parseInput(String[] args) {
 		// parse the input
 		if(args.length < 2) { // jsut making sure we have enough command line arguements
 			inputErrorExitGracefully();
