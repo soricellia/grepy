@@ -35,12 +35,19 @@ public class FileManager {
         return fileContents;
 	}
 	
-	public void writeFile(String fileName, ArrayList<String> output) {
+	public void writeDotFile(String fileName, ArrayList<ArrayList<String>> output) {
 		PrintWriter writer = null;
 		try {
 			writer = new PrintWriter(fileName, "UTF-8");
 			for(int i = 0 ; i < output.size() ; i++) {
-				writer.write(output.get(i));
+				for(int j = 0; j < output.get(i).size(); j++) {
+					writer.write(output.get(i).get(j));
+					if( (i < output.size() - 1) || (j < output.get(i).size() -1) ) {
+						writer.write("->");
+					}
+				}
+				writer.write("\n");
+				
 			}
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();

@@ -13,7 +13,7 @@ public class Grep {
 	
 	public static void main(String[] args) {
 		// parse input into our nfa, dfa and regex files
-		parseInput(args);
+		parseCommandArgs(args);
 		
 		System.out.println("nfa file: " + nfa_file);
 		System.out.println("dfa file: " + dfa_file);
@@ -23,18 +23,26 @@ public class Grep {
 		FileManager fm = new FileManager();
 		System.out.println(fm.readFile(file));
 		NFA nfa = new NFA(regex);
-		nfa.makeStates(regex);
 		
-		ArrayList<String> output = new ArrayList<String>();
-		output.add("q1->q2");
+		//try to find a match for each line in the input file 
+		findMatches(nfa, fm.readFile(file));
 		
+		
+		//write the dfa to the specified file 
 		if(dfa_file != null) {
-			fm.writeFile(dfa_file, output);
+			fm.writeDotFile(dfa_file, nfa.getNFA());
+		}
+	}
+	
+	// try to find a match for each element in the input array
+	private static void findMatches(NFA nfa, ArrayList<String> input) {
+		for(int i =0; i < input.size(); i++) {
+			nfa.parseInput(input.get(i));
 		}
 	}
 	
 	// parses the command line inputs
-	private static void parseInput(String[] args) {
+	private static void parseCommandArgs(String[] args) {
 		// parse the input
 		if(args.length < 2) { // jsut making sure we have enough command line arguements
 			inputErrorExitGracefully();

@@ -1,7 +1,6 @@
 package grepy;
 
 import java.util.ArrayList;
-import java.util.Stack;
 
 public class NFA {
 	private ArrayList<ArrayList<String>> nfa;
@@ -12,15 +11,16 @@ public class NFA {
 	private ArrayList<String> errors;
 	private final String or = "+";
 	private final String star = "*";
-	private final String openParen = "(";
-	private final String closeParen = ")";
+	private ArrayList<String> accepting;
 	
 	public NFA(String regex) {
 		setRegex(regex);
 		nfa = new ArrayList<ArrayList<String>>();
 		ops = new ArrayList<String>();
+		accepting = new ArrayList<String>();
 		currentState = 0;
 		currentOp = 0;
+		makeStates(regex);
 	}
 	
 	
@@ -30,20 +30,41 @@ public class NFA {
 		}
 		
 		for(int i =0; i < nfa.size(); i++) {
-			//take the current op and apply it to the state group
-			applyOp(nfa.get(i), ops.get(currentOp), input);
+			if(!ops.isEmpty()) {
+				//take the current op and apply it to the state group
+				applyOp(nfa.get(i), ops.get(currentOp), input);
+			}
+			else{
+				// we have to see if it matches our states
+				if(!processStates(nfa.get(i), input)) {
+					return; 
+				}
+				else System.out.println("did it");
+			}
+			
+			
 		}
 		
 		//make a state for the input
 		
 	}
 	
-	public void applyOp(ArrayList<String> states, String op, String input) {
+	private boolean processStates(ArrayList<String> states, String input) {
+		for(int i = 0; i < states.size(); i++) {
+			if(!states.get(i).equals(input.charAt(i)+ "")) {
+				return false; // error state
+			}
+		}
+		return true;
+	}
+	
+	
+	private void applyOp(ArrayList<String> states, String op, String input) {
 		// reset the current state
 		currentState = 0;
 		
 		
-		// apply the correct op
+		// apply the correct operation
 		if(op.equals(star)) {
 			for(int i = 0; i < input.length(); i ++) {
 				if(states.get(currentState).equals(input.charAt(i)+"")) {
@@ -66,9 +87,11 @@ public class NFA {
 		else if(op.equals(or)) {
 			
 		}
+		
+		currentState = 0;
 	}
 	
-	public void makeStates(String regex) {
+	private void makeStates(String regex) {
 		ArrayList<String> states = new ArrayList<String>();
 		for(int i = 0; i < regex.length() ; i ++) {
 			// we add to the state the operation needed for each state
@@ -95,11 +118,15 @@ public class NFA {
 				default:
 					// we add to our states
 					states.add(regex.charAt(i)+"");
+					break;
 			}
+			System.out.println("States: " + states);
 			
-			// add this group of states to the dfa
-			nfa.add(states);
+			
 		}
+		// add this group of states to the dfa
+		nfa.add(states);
+		System.out.println(nfa);
 	}
 	
 	
@@ -108,6 +135,9 @@ public class NFA {
 	}
 	public String getRegex() {
 		return this.regex;
+	}
+	public ArrayList<ArrayList<String>> getNFA(){
+		return nfa;
 	}
 	
 }
