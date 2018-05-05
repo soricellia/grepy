@@ -21,7 +21,6 @@ public class Grep {
 		System.out.println("file name: " + file);
 		
 		FileManager fm = new FileManager();
-		System.out.println(fm.readFile(file));
 		NFA nfa = new NFA(regex);
 		
 		//try to find a match for each line in the input file 
@@ -37,7 +36,10 @@ public class Grep {
 	// try to find a match for each element in the input array
 	private static void findMatches(NFA nfa, ArrayList<String> input) {
 		for(int i =0; i < input.size(); i++) {
-			nfa.parseInput(input.get(i));
+			// when we have a match print it to the console
+			if(nfa.processInput(input.get(i))) {
+				System.out.println(input.get(i));
+			}
 		}
 	}
 	
@@ -119,7 +121,7 @@ public class Grep {
 	
 	
 	// on error input cases, just tell them its wrong and exit gracefully. 
-	public static void inputErrorExitGracefully() {
+	private static void inputErrorExitGracefully() {
 		System.out.println("Error incorrect input parameters.\n an example call is: java grepy.Grep [-n NFA-FILE] [-d DFA-FILE] REGEX FILE");
 		System.exit(0); // cant do anything, so exit gracefully
 	}
