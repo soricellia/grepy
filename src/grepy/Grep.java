@@ -1,23 +1,50 @@
 package grepy;
+
+import java.util.ArrayList;
+
 public class Grep {
 
 	private final static String NFA_FILE_DELIMITER  = "-n";
 	private final static String DFA_FILE_DELIMITER = "-d";
 	private static String nfa_file;
 	private static String dfa_file;
-	private static String regex_file;
+	private static String regex;
 	private static String file;
 	
 	public static void main(String[] args) {
 		// parse input into our nfa, dfa and regex files
-		parseInput(args);
+		parseCommandArgs(args);
 		
 		System.out.println("nfa file: " + nfa_file);
 		System.out.println("dfa file: " + dfa_file);
-		System.out.println("regex file: " + regex_file);
+		System.out.println("regex: " + regex);
 		System.out.println("file name: " + file);
+		
+		FileManager fm = new FileManager();
+		NFA nfa = new NFA(regex);
+		
+		//try to find a match for each line in the input file 
+		findMatches(nfa, fm.readFile(file));
+		
+		
+		//write the dfa to the specified file 
+		if(dfa_file != null) {
+			fm.writeDotFile(dfa_file, nfa.getNFA());
+		}
 	}
-	public static void parseInput(String[] args) {
+	
+	// try to find a match for each element in the input array
+	private static void findMatches(NFA nfa, ArrayList<String> input) {
+		for(int i =0; i < input.size(); i++) {
+			// when we have a match print it to the console
+			if(nfa.processInput(input.get(i))) {
+				System.out.println(input.get(i));
+			}
+		}
+	}
+	
+	// parses the command line inputs
+	private static void parseCommandArgs(String[] args) {
 		// parse the input
 		if(args.length < 2) { // jsut making sure we have enough command line arguements
 			inputErrorExitGracefully();
@@ -38,7 +65,7 @@ public class Grep {
 				}
 				
 				dfa_file = args[3];
-				regex_file = args[4];
+				regex = args[4];
 				file = args[5];
 			}
 			
@@ -47,7 +74,7 @@ public class Grep {
 				if(args[2].startsWith("-")) { // make sure we're not giving bad input arguements 
 					inputErrorExitGracefully();
 				}
-				regex_file = args[2];
+				regex = args[2];
 				file = args[3];
 			}
 			
@@ -67,7 +94,7 @@ public class Grep {
 					inputErrorExitGracefully();
 				}
 				nfa_file = args[3];
-				regex_file = args[4];
+				regex = args[4];
 				file = args[5];
 			}
 			
@@ -76,7 +103,7 @@ public class Grep {
 				if(args[2].startsWith("-")) { // make sure we're not giving bad input arguements 
 					inputErrorExitGracefully();
 				}
-				regex_file = args[2];
+				regex = args[2];
 				file = args[3];
 			}
 		}
@@ -86,7 +113,7 @@ public class Grep {
 			if(args[0].startsWith("-")) { // make sure we're not giving bad input arguements 
 				inputErrorExitGracefully();
 			}
-			regex_file = args[0];
+			regex = args[0];
 			file = args[1];
 		}
 		
@@ -94,7 +121,7 @@ public class Grep {
 	
 	
 	// on error input cases, just tell them its wrong and exit gracefully. 
-	public static void inputErrorExitGracefully() {
+	private static void inputErrorExitGracefully() {
 		System.out.println("Error incorrect input parameters.\n an example call is: java grepy.Grep [-n NFA-FILE] [-d DFA-FILE] REGEX FILE");
 		System.exit(0); // cant do anything, so exit gracefully
 	}
