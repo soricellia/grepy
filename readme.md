@@ -14,11 +14,14 @@ To run the program, invoke it from the console:
 
 An example call: `java -jar grepy.jar -d dfa_file.txt '(word)*isa(word)*' file4`
 
-produces the output to the conole: `wordisaword`
+produces the output to the console: `wordisaword`
 
 And dfa_file.txt will contain: 
+
 `w->o->r->d
+
  i->s->a
+
  w->o->r->d`
 
 
