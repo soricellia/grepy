@@ -66,8 +66,13 @@ public class NFA {
 				
 			}
 		}
+		if(input.isEmpty()) {
+			return !inErrorState(); // accepts the input string if inErrorState is false, rejects otherwise
+		}
+		else {
+			return false; // reject the input string
+		}
 		
-		return !inErrorState(); // accept the input string
 	}
 	
 	// processes the grouping of states
@@ -93,10 +98,7 @@ public class NFA {
 			// move the input string along
 			input = input.substring(1, input.length());
 		}
-		//if(!input.isEmpty()) {
-			//errorState();
-			//return false;
-		//}
+		
 		return input; // accept the input string
 	}
 	
@@ -110,27 +112,29 @@ public class NFA {
 		
 		// apply the correct operation
 		if(op.getOp().equals(star)) {
-			for(int i = 0; i < input.length(); i ++) {
+			while(!input.isEmpty()) {
 				if(currentState >= states.size()) {
 					return input;
 				}
 				if(states.get(currentState).equals(input.charAt(0)+"")) {
+					// move the input tape along
+					input = input.substring(1, input.length());
+					currentState++;
 					
 					// if we have more input and were at the end of the state groupings, we have to check if we should loop back around
-					if( (states.size()-1 == currentState) && input.length() > 0 ) {
+					if( (states.size() == currentState) && input.length() > 0 ) {
 						
 						// check if the first element in this group of states matches what the next character is
 						if(states.get(0).equals(input.charAt(0)+ "")) {
 							// start the process over again 
-							input = applyOp(states, op, input.substring(1, input.length()));
+							return applyOp(states, op, input);
 						}
 					}
 				}else {
 					
 				}
-				// move the input tape along
-				input = input.substring(1, input.length());
-				currentState++;
+				
+				
 			}
 		}
 		else if(op.getOp().equals(or)) {
