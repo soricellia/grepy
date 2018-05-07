@@ -1,6 +1,7 @@
 package grepy;
 
 import java.util.ArrayList;
+import java.util.Stack;
 
 public class NFA {
 	
@@ -11,13 +12,12 @@ public class NFA {
 	private int currentOp;
 	private boolean errorState; // used to tell if were in an error state
 	
-	private final String or = "+";
 	private final String star = "*";
 	
 	private ArrayList<ArrayList<String>> nfa;
 	private ArrayList<Operation> ops;
-	private ArrayList<String> acceptingStates;
-	private ArrayList<String> acceptedInput;
+	
+	private Stack<NFA> orStack;
 	
 	
 	
@@ -25,12 +25,21 @@ public class NFA {
 		setRegex(regex);
 		nfa = new ArrayList<ArrayList<String>>();
 		ops = new ArrayList<Operation>();
-		acceptingStates = new ArrayList<String>();
-		acceptedInput = new ArrayList<String>();
 		currentState = 0;
 		currentOp = 0;
 		errorState = false;
+		orStack = new Stack<NFA>();
 		makeStates(regex);
+	}
+	
+	public NFA(NFA clone) {
+		this.regex = clone.regex;
+		this.currentState = clone.currentState;
+		this.currentOp = clone.currentOp;
+		this.errorState = clone.errorState;
+		this.nfa = clone.nfa;
+		this.ops = clone.ops;
+		this.orStack = clone.orStack;
 	}
 	
 	// attempts to walk the NFA using the input string
@@ -46,15 +55,30 @@ public class NFA {
 			
 		}
 		
+		@SuppressWarnings("unchecked")
+		Stack<NFA> cOrStack = (Stack<NFA>) orStack.clone();
+		if(!cOrStack.isEmpty()) {
+			if(applyOrStack(cOrStack, input)) {
+				return true;
+			}
+		}
+		
 		for(int i =0; i < nfa.size(); i++) {
 			if(inErrorState()) {
 				return !inErrorState(); // reject the input string
 			}
 			if(ops.size() > currentOp) { // there is more ops to apply
 				if(ops.get(currentOp).getState() == i) { // if were on the right state for the op, lets apply it
-					//take the current op and apply it to the state group
-					input = applyOp(nfa.get(i), ops.get(currentOp), input);
-					currentOp++;
+					if(ops.get(currentOp).getOp() == star) {
+						//take the current op and apply it to the state group
+						input = applyStar(nfa.get(i), ops.get(currentOp), input);
+						currentOp++;
+					}else {
+						currentOp++;
+						//input = applyOr(nfa.get(i), nfa.get(i+1), input, i);
+						i++;
+					}
+					
 				}else {
 					input = processStates(nfa.get(i), input);
 				}
@@ -103,10 +127,10 @@ public class NFA {
 	}
 	
 	
-	// applies the operation on the state groupings
+	// applies the star operation to the state grouping
 	// ex (ab)*
 	// will apply the * operation to the states ab
-	private String applyOp(ArrayList<String> states, Operation op, String input) {
+	private String applyStar(ArrayList<String> states, Operation op, String input) {
 		// reset the current state
 		currentState = 0;
 		
@@ -127,35 +151,69 @@ public class NFA {
 						// check if the first element in this group of states matches what the next character is
 						if(states.get(0).equals(input.charAt(0)+ "")) {
 							// start the process over again 
-							return applyOp(states, op, input);
+							return applyStar(states, op, input);
 						}
 					}
 				}else {
-					
+					return input;
 				}
 				
 				
 			}
 		}
-		else if(op.getOp().equals(or)) {
-			
+		
+		if(input.isEmpty() && currentState <= states.size()-1) {
+			// we never finished going through all the states and our input is over.. go to error state
+			errorState();
 		}
 
 		return input;
+	}
+
+	private boolean applyOrStack(Stack<NFA> stack, String input){
+		//pop off stack
+		NFA nnfa = stack.pop();
+		
+		if(nnfa.processInput(input)) {
+			return true;
+		}else {
+			if(!stack.isEmpty()) {
+				return stack.pop().processInput(input);
+				
+			}
+		}
+		
+		
+		return false;
 	}
 	
 	// creates the states in the NFA
 	private void makeStates(String regex) {
 		ArrayList<String> states = new ArrayList<String>();
+		String cRegex = "";
+		boolean inParen = false;
+		boolean haveOr = false;
+		
 		for(int i = 0; i < regex.length() ; i ++) {
 			
 			// we add to the state the operation needed for each state	
 			switch(regex.charAt(i)) {
 				case '+': 
-					ops.add(new Operation(this.or, nfa.size()));
-					nfa.add(states);
-					states= new ArrayList<String>();
+					if(!inParen) {
+						orStack.push(new NFA(cRegex));
+						cRegex = "";
+						nfa = new ArrayList<ArrayList<String>>();
+						states = new ArrayList<String>();
+						haveOr = false;
+					}else {
+						haveOr = true;
+						cRegex += regex.charAt(i);
+						// add what we have to the nfa
+						//nfa.add(states);
+						//states = new ArrayList<String>();
+					}
 					break;
+					
 				case '*': 
 					// aa*b
 					// a*b
@@ -182,36 +240,48 @@ public class NFA {
 					
 					Operation op = new Operation(this.star, nfa.size()-1);
 					ops.add(op); // we will use the current size of the nfa to decide which state is the star state
-					
+					cRegex += regex.charAt(i); // add the the current regex
 					states= new ArrayList<String>();
 					break;
+					
 				case '(':
 					// were starting a new state here, so lets add everything we have to the nfa and state the new state
 					if(!states.isEmpty()) { // for the edge case (ab*)
 						nfa.add(states);
 					}
-					
+					inParen = true;
 					states = new ArrayList<String>();
 					break;
+					
 				case ')':
 					// same thing here, we're ending the states that were currently in, so add them to the nfa and start a new list of states
 					if(!states.isEmpty()) { //for the edge case ()
-						nfa.add(states);
+						if(!haveOr) {
+							nfa.add(states);
+						}
 					}
-					
+					inParen = false;
+					if(haveOr) {
+						// add everything we have to the or stack
+						orStack.push(new NFA(cRegex));
+						cRegex = "";
+					}
 					states = new ArrayList<String>();
+					
 					break;
 				default:
 					// we add to our state grouping
 					states.add(regex.charAt(i)+"");
+					cRegex += regex.charAt(i); // add the the current regex
 					break;
 			}
+			
+			
 		}
 		if(!states.isEmpty()) { // we dont want to add empty states (though we could, cause its an nfa)
 			// add this group of states to the dfa
 			nfa.add(states);
 		}
-		System.out.println(nfa);
 	}
 	
 	private void errorState() {
@@ -228,7 +298,17 @@ public class NFA {
 		return this.regex;
 	}
 	public ArrayList<ArrayList<String>> getNFA(){
-		return nfa;
+		ArrayList<ArrayList<String>> allStates = new ArrayList<ArrayList<String>>();
+		
+		@SuppressWarnings("unchecked")
+		Stack<NFA> copyStack = (Stack<NFA>) orStack.clone();
+		
+		while(!copyStack.isEmpty()) {
+			allStates.addAll(copyStack.pop().getNFA());
+		}
+		
+		allStates.addAll(nfa);
+			
+		return allStates;
 	}
-	
 }

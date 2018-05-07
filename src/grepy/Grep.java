@@ -15,11 +15,6 @@ public class Grep {
 		// parse input into our nfa, dfa and regex files
 		parseCommandArgs(args);
 		
-		System.out.println("nfa file: " + nfa_file);
-		System.out.println("dfa file: " + dfa_file);
-		System.out.println("regex: " + regex);
-		System.out.println("file name: " + file);
-		
 		FileManager fm = new FileManager();
 		NFA nfa = new NFA(regex);
 		
@@ -100,7 +95,7 @@ public class Grep {
 			
 			//no nfa
 			else {
-				if(args[2].startsWith("-")) { // make sure we're not giving bad input arguements 
+				if(args[2].startsWith("-")) { // make sure we're not giving bad input arguments 
 					inputErrorExitGracefully();
 				}
 				regex = args[2];
@@ -110,7 +105,7 @@ public class Grep {
 		
 		// no nfa or dfa
 		else {
-			if(args[0].startsWith("-")) { // make sure we're not giving bad input arguements 
+			if(args[0].startsWith("-")) { // make sure we're not giving bad input arguments 
 				inputErrorExitGracefully();
 			}
 			regex = args[0];
